@@ -1,3 +1,4 @@
+[![](https://jitpack.io/v/ZenLiuCN/reactive-service.svg)](https://jitpack.io/#ZenLiuCN/reactive-service)
 #  About
 This project is design for build a lightweight reactive framework for Net Service.
 
