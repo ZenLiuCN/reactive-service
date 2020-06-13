@@ -22,7 +22,7 @@
 
         <logback.version>1.2.3</logback.version>
         <typesafe.config.version>1.4.0</typesafe.config.version>
-        <reactor.version>Dysprosium-RELEASE</reactor.version>
+        <reactor.version>Dysprosium-SR8</reactor.version>
         <auto-service.version>1.0-rc6</auto-service.version>
 
         <jackson.version>2.10.3</jackson.version>
