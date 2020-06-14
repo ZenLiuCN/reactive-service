@@ -53,7 +53,6 @@ public final class Monad<T> implements Supplier<Optional<T>> {
     public static <T> Monad<Optional<T>> unitNullable(@Nullable T value) {
         return new Monad<>(Optional.ofNullable(value));
     }
-
     //region Properties
     private final List<Function<Object, Object>> mapper = new ArrayList<>();
     private final Map<Integer, List<Function<Object, Object>>> flatMapper = new HashMap<>();
@@ -61,8 +60,6 @@ public final class Monad<T> implements Supplier<Optional<T>> {
     private final Supplier<Object> supplier;
     private volatile Object value;
     //endregion
-
-
     //region Constructor
     Monad(@NotNull final Object value) {
         requireNonNull(value);
@@ -99,7 +96,6 @@ public final class Monad<T> implements Supplier<Optional<T>> {
         }));
     }
     //endregion
-
     //region Instance bind
     public <R> Monad<R> map(final Function<T, R> factor) {
         return new Monad<R>(this, factor, null);
@@ -114,8 +110,6 @@ public final class Monad<T> implements Supplier<Optional<T>> {
         return new Monad<>(this, factor);
     }
     //endregion
-
-
     //region evaluation
 
     private synchronized void evalSupplier() {

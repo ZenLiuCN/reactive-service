@@ -43,8 +43,8 @@ import static java.util.Objects.requireNonNull;
  *  </p>
  *  <code>
  *    Case.doMatch(1)
- *     .caseOf(2, System.out::println)//if not match any , this will be execute
- *     .caseOf(i -> i == 2, System.out::println) //if not match any , this will be execute
+ *     .caseOf(2, System.out::println)// this will be execute
+ *     .caseOf(i -> i == 2, System.out::println) //if is 2 , this will be execute
  *     .caseElse(System.out::println) // if not match any , this will be execute
  *     .get();// this finally execute matched branch,match happens on ever case* method
  *  </code>
