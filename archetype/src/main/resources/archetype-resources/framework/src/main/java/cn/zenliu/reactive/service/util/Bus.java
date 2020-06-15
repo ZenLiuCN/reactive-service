@@ -13,10 +13,10 @@
  *  limitations under the License.
  *
  *   @Project: reactive-service-framework
- *   @Module: reactive-service-framework
- *   @File: ReactiveEventBus.java
+ *   @Module: reactive-service-archetype
+ *   @File: Bus.java
  *   @Author:  lcz20@163.com
- *   @LastModified:  2020-06-14 21:24:57
+ *   @LastModified:  2020-06-15 20:19:56
  */
 
 package cn.zenliu.reactive.service.util;
@@ -35,10 +35,10 @@ import java.util.function.Predicate;
 
 /**
  * Event bus base on Reactive Stream (Reactor)
- * can be extends or just use {@link ReactiveBus#defaultBus}
+ * can be extends or just use {@link Bus#defaultBus}
  * @param <T>
  */
-public abstract class ReactiveBus<T extends ReactiveBus.Event> {
+public abstract class Bus<T extends Bus.Event> {
     /**
      * just some pure interface as a marker type
      */
@@ -49,23 +49,23 @@ public abstract class ReactiveBus<T extends ReactiveBus.Event> {
      * a lazy warp of default bus
      */
     @SuppressWarnings("Convert2MethodRef")
-    public static final Lazy<ReactiveBus<Event>> defaultBus = Lazy.laterComputed(() -> DefaultBus.get());
+    public static final Lazy<Bus<Event>> defaultBus = Lazy.laterComputed(() -> DefaultBus.get());
 
     /**
      * default impl
      */
-    private static class DefaultBus extends ReactiveBus<Event> {
+    private static class DefaultBus extends Bus<Event> {
         DefaultBus(final FluxSink<Event> sink, final Flux<Event> flux) {
             super(sink, flux);
         }
         static DefaultBus get() {
             final DirectProcessor<Event> processor = DirectProcessor.create();
-           return new DefaultBus(processor.sink(), processor);
+            return new DefaultBus(processor.sink(), processor);
         }
     }
 
     //region Defines
-    protected ReactiveBus(final FluxSink<T> sink, final Flux<T> flux) {
+    protected Bus(final FluxSink<T> sink, final Flux<T> flux) {
         this.sink = sink;
         this.flux = flux;
     }

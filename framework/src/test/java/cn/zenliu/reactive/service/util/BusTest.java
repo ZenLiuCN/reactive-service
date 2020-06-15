@@ -26,20 +26,20 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ReactiveBusTest {
+class BusTest {
     @Data
-    static class EventImpl implements ReactiveBus.Event{
+    static class EventImpl implements Bus.Event{
         final String message;
     }
     @Test
     void defaultTest() {
-        final ReactiveBus<ReactiveBus.Event> bus = ReactiveBus.defaultBus.get()
+        final Bus<Bus.Event> bus = Bus.defaultBus.get()
             .orElseThrow(() -> new RuntimeException("hh"));
-        assertEquals(bus, ReactiveBus.defaultBus.get().orElse(null));
+        assertEquals(bus, Bus.defaultBus.get().orElse(null));
     }
     @Test
     void default2Test() throws InterruptedException {
-        final ReactiveBus<ReactiveBus.Event> bus = ReactiveBus.defaultBus.get()
+        final Bus<Bus.Event> bus = Bus.defaultBus.get()
             .orElseThrow(() -> new RuntimeException("hh"));
         final EventImpl ev=new EventImpl("ohoh");
        bus.subscribe(e->assertEquals(ev,e));
