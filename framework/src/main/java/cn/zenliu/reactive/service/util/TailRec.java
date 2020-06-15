@@ -47,7 +47,7 @@ import java.util.function.Supplier;
  * @param <T>
  */
 @FunctionalInterface
-public interface TailRec<T> extends Supplier<Optional<T>> {
+public interface TailRec<T> extends Supplier<Optional<T>>  {
     TailRec<T> apply();
 
     default boolean isComplete() {

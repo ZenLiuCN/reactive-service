@@ -40,7 +40,7 @@ class TailRecTest {
     static TailRec<BigInteger> factorial(final int number) {
         return factorial(BigInteger.ONE, number);
     }
-    static BigInteger factorialRec(final BigInteger factorial, final int number) throws ExecutionException, InterruptedException {
+    static BigInteger factorialRec(final BigInteger factorial, final int number) {
         if (number == 1) {
             return factorial;
         } else return factorialRec(factorial.multiply(BigInteger.valueOf(number)) , number - 1);
