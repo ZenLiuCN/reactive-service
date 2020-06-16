@@ -18,7 +18,7 @@
     <modules>
         <module id="framework" dir="framework" name="framework">
             <fileSets>
-                <fileSet filtered="true" packaged="false" encoding="UTF-8">
+                <fileSet filtered="false" packaged="false" encoding="UTF-8">
                     <directory>src/main/java</directory>
                     <includes>
                         <include>**/*.java</include>
