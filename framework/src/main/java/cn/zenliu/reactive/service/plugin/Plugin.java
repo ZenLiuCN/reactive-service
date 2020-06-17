@@ -85,8 +85,18 @@ public interface Plugin {
                 if (pluginCache.containsKey(clz)) {
                     @SuppressWarnings("unchecked") final T old = (T) pluginCache.get(clz).get();
                     if (old == null) {
-                        return (preferSPI ? spiInstanceOf(clz) : reflectInstanceOf(clz));
+                        final Optional<T> ins = (preferSPI ? spiInstanceOf(clz) : reflectInstanceOf(clz));
+                        if (ins.isPresent()) {
+                            pluginCache.put(clz, new SoftReference<>(ins.get()));
+                            return ins;
+                        }
                     } else return Optional.of(old);
+                } else {
+                    final Optional<T> ins = (preferSPI ? spiInstanceOf(clz) : reflectInstanceOf(clz));
+                    if (ins.isPresent()) {
+                        pluginCache.put(clz, new SoftReference<>(ins.get()));
+                        return ins;
+                    }
                 }
                 return Optional.empty();
             }

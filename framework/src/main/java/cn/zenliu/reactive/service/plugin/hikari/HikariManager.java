@@ -51,8 +51,8 @@ public interface HikariManager extends Plugin {
         HikariManagerImpl.disableSPI = !useSPI;
     }
 
-    static HikariManager getInstance(boolean soft) {
-        return soft? HikariManagerImpl.hardInstance():HikariManagerImpl.softInstance();
+    static HikariManager getInstance() {
+        return HikariManagerImpl.hardInstance();
     }
 
     static HikariManager getSoftInstance() {
