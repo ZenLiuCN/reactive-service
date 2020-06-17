@@ -20,9 +20,9 @@
  */
 
 
-
 package cn.zenliu.reactive.service.util;
 
+import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -81,7 +81,6 @@ public interface Union {
     }
 
 
-
     static Union of(@Nullable Object t, Class<?>... types) {
         final HashSet<Class<?>> classes = new HashSet<>(Arrays.asList(types));
         if (t != null) classes.add(t.getClass());
@@ -100,8 +99,9 @@ public interface Union {
         else return new scope.Union3Impl<T1, T2, T3>(null, c1, c2, c3);
     }
 
-    final class scope {
-        protected static abstract class UnionImpl implements Union {
+    @UtilityClass
+    class scope {
+        protected abstract class UnionImpl implements Union {
             private final List<Class<?>> holder = new ArrayList<>();
             private final Object value;
             private volatile boolean match = false;
@@ -172,7 +172,7 @@ public interface Union {
             }
         }
 
-        protected static final class UnionAll extends UnionImpl implements Union {
+        protected final class UnionAll extends UnionImpl implements Union {
             public UnionAll(Object t, Collection<Class<?>> classes) {
                 super(t, classes);
             }
@@ -183,7 +183,7 @@ public interface Union {
             }
         }
 
-        private static final class Union2Impl<T1, T2> extends UnionImpl implements Union2<T1, T2> {
+        private final class Union2Impl<T1, T2> extends UnionImpl implements Union2<T1, T2> {
             private final Class<T1> clz1;
             private final Class<T2> clz2;
 
@@ -206,7 +206,7 @@ public interface Union {
             }
         }
 
-        private static final class Union3Impl<T1, T2, T3> extends UnionImpl implements Union3<T1, T2, T3> {
+        private final class Union3Impl<T1, T2, T3> extends UnionImpl implements Union3<T1, T2, T3> {
             private final Class<T1> clz1;
             private final Class<T2> clz2;
             private final Class<T3> clz3;

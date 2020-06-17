@@ -21,7 +21,9 @@
 
 package cn.zenliu.reactive.service.util;
 
+import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import reactor.core.Disposable;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
@@ -36,127 +38,123 @@ import java.util.function.Predicate;
 /**
  * Event bus base on Reactive Stream (Reactor)
  * can be extends or just use {@link Bus#defaultBus}
+ *
  * @param <T>
  */
-public abstract class Bus<T extends Bus.Event> {
+public interface Bus<T extends Bus.Event> {
     /**
      * just some pure interface as a marker type
      */
-    public interface Event {
+    interface Event {
     }
+
+    //region Defines
+    boolean isRunning();
+
+    <R extends T> void publish(@NotNull final R event);
+
+
+    Disposable subscribe(
+        @NotNull final Consumer<? super T> consumer,
+        @Nullable final Predicate<T> predicate,
+        @Nullable final Scheduler scheduler
+    );
+
+    Flux<T> fetchFlux(
+        @Nullable final Predicate<T> predicate,
+        @Nullable final Scheduler scheduler
+    );
+
+    //endregion
+    Event InvalidEvent = new Event() {};
 
     /**
      * a lazy warp of default bus
      */
     @SuppressWarnings("Convert2MethodRef")
-    public static final Lazy<Bus<Event>> defaultBus = Lazy.laterComputed(() -> DefaultBus.get());
+    Lazy<Bus<Event>> defaultBus = Lazy.laterComputed(() -> {
+        final DirectProcessor<Event> processor = DirectProcessor.create();
+        return new scope.DefaultBus(processor.sink(), processor);
+    });
 
-    /**
-     * default impl
-     */
-    private static class DefaultBus extends Bus<Event> {
-        DefaultBus(final FluxSink<Event> sink, final Flux<Event> flux) {
-            super(sink, flux);
+
+    @UtilityClass
+    class scope {
+        protected abstract class DefaultAbstractBus<T extends Event> implements Bus<T> {
+            protected DefaultAbstractBus(final FluxSink<T> sink, final Flux<T> flux) {
+                this.sink = sink;
+                this.flux = flux;
+            }
+
+            protected final FluxSink<T> sink;
+            protected final Flux<T> flux;
+            protected final List<Disposable> disposables = new ArrayList<>();
+
+
+            /**
+             * check if event bus is running
+             *
+             * @return bool
+             */
+            @Override
+            public boolean isRunning() {
+                return !disposables.isEmpty() && !disposables.stream().allMatch(Disposable::isDisposed);
+            }
+
+            @Override
+            /**
+             * publish some event
+             *
+             * @param event event to send
+             */
+            public <R extends T> void publish(@NotNull final R event) {
+                synchronized (this.sink) {
+                    sink.next(event);
+                }
+            }
+
+            @Override
+            public Flux<T> fetchFlux(
+                final @Nullable Predicate<T> predicate,
+                final @Nullable Scheduler scheduler) {
+                Flux<T> fx = flux.share();
+                if (scheduler != null)
+                    fx = fx.subscribeOn(scheduler);
+                if (predicate != null) fx = fx.filter(predicate);
+                return fx;
+            }
+
+            @Override
+            public Disposable subscribe(
+                @NotNull final Consumer<? super T> consumer,
+                @Nullable final Predicate<T> predicate,
+                @Nullable final Scheduler scheduler
+            ) {
+                synchronized (disposables) {
+                    Flux<T> fx = flux.share();
+                    if (scheduler != null)
+                        fx = fx.subscribeOn(scheduler);
+                    if (predicate != null) fx = fx.filter(predicate);
+                    final Disposable disposable = fx.subscribe(consumer);
+                    disposables.add(disposable);
+                    return disposable;
+                }
+            }
+
+
+            /**
+             * stop event bus if any of it is running
+             */
+            public void stop() {
+                if (isRunning()) disposables.forEach(Disposable::dispose);
+            }
         }
-        static DefaultBus get() {
-            final DirectProcessor<Event> processor = DirectProcessor.create();
-           return new DefaultBus(processor.sink(), processor);
+
+        protected final class DefaultBus extends DefaultAbstractBus<Event> {
+            protected DefaultBus(final FluxSink<Event> sink, final Flux<Event> flux) {
+                super(sink, flux);
+            }
         }
+
     }
-
-    //region Defines
-    protected Bus(final FluxSink<T> sink, final Flux<T> flux) {
-        this.sink = sink;
-        this.flux = flux;
-    }
-
-    protected final FluxSink<T> sink;
-    protected final Flux<T> flux;
-    protected final List<Disposable> disposables = new ArrayList<>();
-
-
-    /**
-     * check if event bus is running
-     *
-     * @return bool
-     */
-    public boolean isRunning() {
-        return !disposables.isEmpty() && !disposables.stream().allMatch(Disposable::isDisposed);
-    }
-
-    /**
-     * publish some event
-     *
-     * @param event event to send
-     */
-    public <R extends T> void publish(@NotNull final R event) {
-        synchronized (this.sink) {
-            sink.next(event);
-        }
-    }
-
-    public Disposable subscribe(
-        @NotNull final Consumer<? super T> consumer
-    ) {
-        synchronized (disposables) {
-            final Disposable disposable = flux
-                .share()
-                .subscribe(consumer);
-            disposables.add(disposable);
-            return disposable;
-        }
-    }
-
-    public Disposable subscribe(
-        @NotNull final Consumer<? super T> consumer,
-        @NotNull final Scheduler scheduler
-    ) {
-        synchronized (disposables) {
-            final Disposable disposable = flux
-                .share()
-                .subscribeOn(scheduler)
-                .subscribe(consumer);
-            disposables.add(disposable);
-            return disposable;
-        }
-    }
-
-    public Disposable subscribe(
-        @NotNull final Predicate<T> predicate,
-        @NotNull final Consumer<? super T> consumer
-    ) {
-        synchronized (disposables) {
-            final Disposable disposable = flux
-                .share()
-                .filter(predicate)
-                .subscribe(consumer);
-            disposables.add(disposable);
-            return disposable;
-        }
-    }
-
-    public Disposable subscribe(
-        @NotNull final Predicate<T> predicate,
-        @NotNull final Consumer<? super T> consumer,
-        @NotNull final Scheduler scheduler
-    ) {
-        synchronized (disposables) {
-            final Disposable disposable = flux
-                .share()
-                .subscribeOn(scheduler)
-                .filter(predicate)
-                .subscribe(consumer);
-            disposables.add(disposable);
-            return disposable;
-        }
-    }
-
-
-    /**
-     * stop event bus if any of it is running
-     */
-    public void stop() {
-        if (isRunning()) disposables.forEach(Disposable::dispose);
-    }
-    //endregion
 }
