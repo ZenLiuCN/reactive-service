@@ -19,6 +19,8 @@
  *   @LastModified:  2020-06-13 15:06:41
  */
 
+
+
 package cn.zenliu.reactive.service.util;
 
 import org.jetbrains.annotations.Nullable;
@@ -29,28 +31,32 @@ import java.util.function.Consumer;
 public interface Union {
     Class<?> getType();
 
+    boolean isNull();
+
     boolean isType(Class<?> type);
 
     <T> Optional<T> getValue(Class<T> type);
 
-    List<Class<?>> getMaybe();
 
     /**
      * guard method
-     * @param type target type
+     *
+     * @param type     target type
      * @param consumer consumer of value
-     * @param <T> desired type
+     * @param <T>      desired type
      */
-    <T> void caseDo(Class<T> type, Consumer<T> consumer);
+    <T> Union caseDo(Class<T> type, Consumer<T> consumer);
 
     /**
      * default type guard method (should be last of all guards)
+     *
      * @param consumer consumer of value
      */
     void caseElse(Consumer<Object> consumer);
 
     /**
      * create a Union with new value
+     *
      * @param value must be one of the Union class type
      * @return new Union or throw RuntimeException
      */
@@ -58,28 +64,52 @@ public interface Union {
 
     /**
      * check one Union is Same Union with other one
+     *
      * @param other other Union
      * @return is same union
      */
     boolean is(Union other);
 
-    /**
-     * create a new Union instance
-     * @param t current union value
-     * @param types support types
-     * @return union
-     */
+    interface Union2<T1, T2> extends Union {
+        @Override
+        Union2<T1, T2> of(Object value);
+    }
+
+    interface Union3<T1, T2, T3> extends Union {
+        @Override
+        Union3<T1, T2, T3> of(Object value);
+    }
+
+
+
     static Union of(@Nullable Object t, Class<?>... types) {
         final HashSet<Class<?>> classes = new HashSet<>(Arrays.asList(types));
-        if(t!=null)  classes.add(t.getClass());
-        return new scope.UnionImpl(t, classes);
+        if (t != null) classes.add(t.getClass());
+        return new scope.UnionAll(t, classes);
+    }
+
+    static <T1, T2> Union2<T1, T2> of(@Nullable Object t, Class<T1> c1, Class<T2> c2) {
+        if (c1.isInstance(t) || c2.isInstance(t))
+            return new scope.Union2Impl<T1, T2>(t, c1, c2);
+        else return new scope.Union2Impl<T1, T2>(null, c1, c2);
+    }
+
+    static <T1, T2, T3> Union3<T1, T2, T3> of(@Nullable Object t, Class<T1> c1, Class<T2> c2, Class<T3> c3) {
+        if (c1.isInstance(t) || c2.isInstance(t) || c3.isInstance(t))
+            return new scope.Union3Impl<T1, T2, T3>(t, c1, c2, c3);
+        else return new scope.Union3Impl<T1, T2, T3>(null, c1, c2, c3);
     }
 
     final class scope {
-        protected final static class UnionImpl implements Union {
+        protected static abstract class UnionImpl implements Union {
             private final List<Class<?>> holder = new ArrayList<>();
             private final Object value;
             private volatile boolean match = false;
+
+            @Override
+            public boolean isNull() {
+                return value == null;
+            }
 
             public UnionImpl(Object t, Collection<Class<?>> classes) {
                 this.value = t;
@@ -99,20 +129,17 @@ public interface Union {
                 } else return false;
             }
 
-            @Override
-            public List<Class<?>> getMaybe() {
-                return Collections.unmodifiableList(holder);
-            }
 
             @SuppressWarnings("unchecked")
             @Override
-            public <T> void caseDo(Class<T> type, Consumer<T> consumer) {
+            public <T> Union caseDo(Class<T> type, Consumer<T> consumer) {
                 if (type.isInstance(value)) {
                     synchronized (this) {
                         match = true;
                         consumer.accept((T) value);
                     }
                 }
+                return this;
             }
 
             @Override
@@ -122,13 +149,6 @@ public interface Union {
                 }
             }
 
-            @Override
-            public Union of(Object value) {
-                if (holder.contains(value.getClass()))
-                    return new UnionImpl(value, holder);
-                else
-                    throw new RuntimeException("invalid value type of " + value.getClass() + " for Union " + holder.toString());
-            }
 
             @Override
             public boolean is(Union other) {
@@ -149,6 +169,65 @@ public interface Union {
             @Override
             public <T> Optional<T> getValue(Class<T> type) {
                 return Optional.ofNullable(type.isInstance(value) ? (T) value : null);
+            }
+        }
+
+        protected static final class UnionAll extends UnionImpl implements Union {
+            public UnionAll(Object t, Collection<Class<?>> classes) {
+                super(t, classes);
+            }
+
+            @Override
+            public Union of(Object value) {
+                return new UnionAll(value, super.holder);
+            }
+        }
+
+        private static final class Union2Impl<T1, T2> extends UnionImpl implements Union2<T1, T2> {
+            private final Class<T1> clz1;
+            private final Class<T2> clz2;
+
+            Union2Impl(Object t, Class<T1> c1, Class<T2> c2) {
+                super(t, Collections.emptyList());//todo performance
+                this.clz1 = c1;
+                this.clz2 = c2;
+            }
+
+
+            @SuppressWarnings("rawtypes")
+            @Override
+            public boolean is(Union other) {
+                return (other instanceof Union2Impl) && ((Union2Impl) other).clz1 == clz1 && ((Union2Impl) other).clz2 == clz2;
+            }
+
+            @Override
+            public Union2<T1, T2> of(Object value) {
+                return Union.of(value, clz1, clz2);
+            }
+        }
+
+        private static final class Union3Impl<T1, T2, T3> extends UnionImpl implements Union3<T1, T2, T3> {
+            private final Class<T1> clz1;
+            private final Class<T2> clz2;
+            private final Class<T3> clz3;
+
+            Union3Impl(Object t, Class<T1> c1, Class<T2> c2, Class<T3> c3) {
+                super(t, Collections.emptyList());//todo performance
+                this.clz1 = c1;
+                this.clz2 = c2;
+                this.clz3 = c3;
+            }
+
+
+            @SuppressWarnings("rawtypes")
+            @Override
+            public boolean is(Union other) {
+                return (other instanceof Union3Impl) && ((Union3Impl) other).clz1 == clz1 && ((Union3Impl) other).clz2 == clz2;
+            }
+
+            @Override
+            public Union3<T1, T2, T3> of(Object value) {
+                return Union.of(value, clz1, clz2, clz3);
             }
         }
     }
