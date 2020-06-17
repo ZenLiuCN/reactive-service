@@ -21,6 +21,8 @@
 
 package cn.zenliu.reactive.service.util;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -61,10 +63,15 @@ public interface Union {
      */
     boolean is(Union other);
 
-
-    static Union of(Object t, Class<?>... types) {
+    /**
+     * create a new Union instance
+     * @param t current union value
+     * @param types support types
+     * @return union
+     */
+    static Union of(@Nullable Object t, Class<?>... types) {
         final HashSet<Class<?>> classes = new HashSet<>(Arrays.asList(types));
-        classes.add(t.getClass());
+        if(t!=null)  classes.add(t.getClass());
         return new scope.UnionImpl(t, classes);
     }
 
