@@ -13,10 +13,10 @@
  *  limitations under the License.
  *
  *   @Project: reactive-service-framework
- *   @Module: reactive-service-archetype
- *   @File: Bus.java
+ *   @Module: reactive-service-framework
+ *   @File: ReactiveEventBus.java
  *   @Author:  lcz20@163.com
- *   @LastModified:  2020-06-15 20:19:56
+ *   @LastModified:  2020-06-14 21:24:57
  */
 
 package cn.zenliu.reactive.service.util;
@@ -60,7 +60,7 @@ public abstract class Bus<T extends Bus.Event> {
         }
         static DefaultBus get() {
             final DirectProcessor<Event> processor = DirectProcessor.create();
-            return new DefaultBus(processor.sink(), processor);
+           return new DefaultBus(processor.sink(), processor);
         }
     }
 

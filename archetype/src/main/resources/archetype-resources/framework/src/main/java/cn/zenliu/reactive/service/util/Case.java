@@ -13,10 +13,10 @@
  *  limitations under the License.
  *
  *   @Project: reactive-service-framework
- *   @Module: reactive-service-archetype
- *   @File: Case.java
+ *   @Module: reactive-service-framework
+ *   @File: Chain.java
  *   @Author:  lcz20@163.com
- *   @LastModified:  2020-06-14 12:21:03
+ *   @LastModified:  2020-06-13 15:06:41
  */
 
 package cn.zenliu.reactive.service.util;
@@ -24,13 +24,12 @@ package cn.zenliu.reactive.service.util;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  *  <p>
@@ -43,8 +42,8 @@ import static java.util.Objects.requireNonNull;
  *  </p>
  *  <code>
  *    Case.doMatch(1)
- *     .caseOf(2, System.out::println)//if not match any , this will be execute
- *     .caseOf(i -> i == 2, System.out::println) //if not match any , this will be execute
+ *     .caseOf(2, System.out::println)// this will be execute
+ *     .caseOf(i -> i == 2, System.out::println) //if is 2 , this will be execute
  *     .caseElse(System.out::println) // if not match any , this will be execute
  *     .get();// this finally execute matched branch,match happens on ever case* method
  *  </code>

@@ -47,7 +47,7 @@ import java.util.function.Supplier;
  * @param <T>
  */
 @FunctionalInterface
-public interface TailRec<T> extends Supplier<Optional<T>> {
+public interface TailRec<T> extends Supplier<Optional<T>>  {
     TailRec<T> apply();
 
     default boolean isComplete() {
@@ -81,7 +81,7 @@ public interface TailRec<T> extends Supplier<Optional<T>> {
      * </p>
      * @return final value
      */
-    // @SuppressWarnings("OptionalGetWithoutIsPresent")
+   // @SuppressWarnings("OptionalGetWithoutIsPresent")
     default Optional<T> get() {
         TailRec<T> value=this.apply();
         while (!value.isComplete()){

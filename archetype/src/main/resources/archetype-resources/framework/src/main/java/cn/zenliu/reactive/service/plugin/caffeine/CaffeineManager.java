@@ -22,14 +22,9 @@
 package cn.zenliu.reactive.service.plugin.caffeine;
 
 import cn.zenliu.reactive.service.plugin.Plugin;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.Synchronized;
+import cn.zenliu.reactive.service.util.Singleton;
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-
-import java.lang.ref.SoftReference;
-import java.util.Iterator;
-import java.util.ServiceLoader;
 
 public interface CaffeineManager extends Plugin {
     //region SPI define
@@ -37,73 +32,32 @@ public interface CaffeineManager extends Plugin {
     //endregion
 
     //region SPI template
-    static void setUseSPI(boolean useSPI) {
-        CaffeineManagerImpl.disableSPI = !useSPI;
+    static Singleton<CaffeineManager> getSingleton() {
+        return scope.singleton;
     }
-
-    static CaffeineManager getInstance() {
-        return CaffeineManagerImpl.hardInstance();
-        //return CaffeineManagerImpl.softInstance();
-    }
-
     static CaffeineManager getSoftInstance() {
-        return CaffeineManagerImpl.softInstance();
+        return scope.singleton.getSoftInstance()
+            .orElseThrow(Plugin.scope::InstanceErrorSuppler);
     }
 
     static CaffeineManager getHardInstance() {
-        return CaffeineManagerImpl.hardInstance();
+        return scope.singleton.getHardReference()
+            .orElseThrow(Plugin.scope::InstanceErrorSuppler);
     }
     //endregion
+    @UtilityClass
+    class scope{
+        protected Singleton<CaffeineManager> singleton =
+            Singleton.generate(
+              CaffeineManagerImpl::new,
+                CaffeineManager.class
+            );
+        @Slf4j
+        final class CaffeineManagerImpl implements CaffeineManager {
+            //region SPI impl
 
-    @Slf4j
-    final class CaffeineManagerImpl implements CaffeineManager {
-
-        //region SPI template
-        @Setter
-        @Getter
-        static volatile boolean disableSPI = false;
-
-        private static CaffeineManager loadService() {
-            CaffeineManager impl = null;
-            if (!disableSPI)
-                try {
-                    final Iterator<CaffeineManager> itr = ServiceLoader.load(CaffeineManager.class).iterator();
-                    impl = itr.hasNext() ? itr.next() : null;
-                } catch (Throwable t) {
-                    log.debug("error on load service CaffeineManager via SPI", t);
-                }
-            if (impl == null) {
-                if (!disableSPI) log.debug("not found other impl of CaffeineManager via SPI, use default impl!");
-                impl = new CaffeineManagerImpl();
-            }
-            return impl;
+            //endregion
         }
-
-        @Synchronized
-        static CaffeineManager softInstance() {
-            if (softHolder != null) {
-                final CaffeineManager impl = softHolder.get();
-                if (impl != null) return impl;
-            }
-            final CaffeineManager impl = loadService();
-            softHolder = new SoftReference<>(impl);
-            return impl;
-        }
-
-        static SoftReference<CaffeineManager> softHolder;
-
-        @Synchronized
-        static CaffeineManager hardInstance() {
-            if (hardHolder != null) return hardHolder;
-            hardHolder = loadService();
-            return hardHolder;
-        }
-
-        static CaffeineManager hardHolder;
-        //endregion
-
-        //region SPI impl
-
-        //endregion
     }
+
 }

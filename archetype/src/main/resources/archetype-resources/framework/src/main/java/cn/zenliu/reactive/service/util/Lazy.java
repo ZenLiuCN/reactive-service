@@ -21,20 +21,21 @@
 
 package cn.zenliu.reactive.service.util;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 
 /**
  * impl of Lazy pattern
- * @author Zen.Liu
+ *
  * @param <T>
+ * @author Zen.Liu
  */
-public interface Lazy<T> {
+public interface Lazy<T> extends Supplier<Optional<T>> {
     /**
-     * @param supplier
-     * null when use {@link Lazy#laterComputed(Supplier)}
-     * must nonnull when use {@link Lazy#laterSupplied()}
+     * @param supplier null when use {@link Lazy#laterComputed(Supplier)}
+     *                 must nonnull when use {@link Lazy#laterSupplied()}
      * @return some Lazy<T>
      */
     T getOrCompute(Supplier<T> supplier);
@@ -50,6 +51,7 @@ public interface Lazy<T> {
 
     /**
      * lazy supplied
+     *
      * @param <T>
      */
     final class LazySupplied<T> implements Lazy<T> {
@@ -66,10 +68,16 @@ public interface Lazy<T> {
             }
             return value;
         }
+
+        @Override
+        public Optional<T> get() {
+            return Optional.empty();
+        }
     }
 
     /**
      * lazy computed
+     *
      * @param <T>
      */
     final class LazyComputed<T> implements Lazy<T> {
@@ -83,6 +91,11 @@ public interface Lazy<T> {
         public T getOrCompute(Supplier<T> supplier) {
             final T result = value;
             return result == null ? maybeCompute() : result;
+        }
+
+        @Override
+        public Optional<T> get() {
+            return Optional.ofNullable(getOrCompute(null));
         }
 
         private synchronized T maybeCompute() {
