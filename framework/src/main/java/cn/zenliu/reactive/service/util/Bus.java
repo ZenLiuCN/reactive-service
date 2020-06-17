@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import reactor.core.Disposable;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.FluxSink;
 import reactor.core.scheduler.Scheduler;
 
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Event bus base on Reactive Stream (Reactor)
@@ -66,28 +68,39 @@ public interface Bus<T extends Bus.Event> {
     );
 
     //endregion
-    Event InvalidEvent = new Event() {};
+
 
     /**
      * a lazy warp of default bus
      */
-    @SuppressWarnings("Convert2MethodRef")
-    Lazy<Bus<Event>> defaultBus = Lazy.laterComputed(() -> {
-        final DirectProcessor<Event> processor = DirectProcessor.create();
-        return new scope.DefaultBus(processor.sink(), processor);
-    });
+    Lazy<Bus<Event>> defaultBus = Lazy.laterComputed(() -> new scope.DefaultBus(() -> {
+        final DirectProcessor<Event> pro = DirectProcessor.create();
+        return pro;
+    }));
 
 
     @UtilityClass
     class scope {
-        protected abstract class DefaultAbstractBus<T extends Event> implements Bus<T> {
-            protected DefaultAbstractBus(final FluxSink<T> sink, final Flux<T> flux) {
-                this.sink = sink;
-                this.flux = flux;
+        protected abstract class DefaultAbstractBus<T extends Bus.Event> implements Bus<T> {
+            protected DefaultAbstractBus(final Supplier<FluxProcessor<T, T>> supplier) {
+                this.supplier = supplier;
             }
 
-            protected final FluxSink<T> sink;
-            protected final Flux<T> flux;
+            private Flux<T> onErrorHandler(Throwable t) {
+                this.prepare();
+                //todo default error Handler
+                return flux;
+            }
+
+            protected synchronized void prepare() {
+                final FluxProcessor<T, T> processor = supplier.get();
+                this.sink = processor.sink();
+                this.flux = processor.onErrorResume(this::onErrorHandler);
+            }
+
+            protected volatile FluxSink<T> sink;
+            protected volatile Flux<T> flux;
+            protected final Supplier<FluxProcessor<T, T>> supplier;
             protected final List<Disposable> disposables = new ArrayList<>();
 
 
@@ -107,10 +120,8 @@ public interface Bus<T extends Bus.Event> {
              *
              * @param event event to send
              */
-            public <R extends T> void publish(@NotNull final R event) {
-                synchronized (this.sink) {
-                    sink.next(event);
-                }
+            public synchronized <R extends T> void publish(@NotNull final R event) {
+                sink.next(event);
             }
 
             @Override
@@ -150,9 +161,10 @@ public interface Bus<T extends Bus.Event> {
             }
         }
 
-        protected final class DefaultBus extends DefaultAbstractBus<Event> {
-            protected DefaultBus(final FluxSink<Event> sink, final Flux<Event> flux) {
-                super(sink, flux);
+        protected final class DefaultBus extends DefaultAbstractBus<Bus.Event> {
+
+            protected DefaultBus(final Supplier<FluxProcessor<Event, Event>> supplier) {
+                super(supplier);
             }
         }
 
