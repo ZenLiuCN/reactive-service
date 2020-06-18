@@ -27,43 +27,64 @@ import java.math.BigInteger;
 import java.time.Instant;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
-import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TailRecTest {
-    private static TailRec<BigInteger> factorial(final BigInteger factorial, final int number) {
-        if (number == 1) {
-            return TailRec.done(factorial);
-        } else return () -> factorial(factorial.multiply(BigInteger.valueOf(number)), number - 1);
+    //fibonacci 0,1,1,2,3,5...
+    private static TailRec<BigInteger> fibonacci(
+        final int number,
+        final BigInteger current,
+        final BigInteger next
+    ) {
+        return number == 0 ? TailRec.done(current) : () -> fibonacci(number - 1, next, current.add(next));
     }
 
-    static TailRec<BigInteger> factorial(final int number) {
-        return factorial(BigInteger.ONE, number);
+    static TailRec<BigInteger> Fibonacci(final int number) {
+        return fibonacci(number, BigInteger.ZERO, BigInteger.ONE);
     }
-    static BigInteger factorialRec(final BigInteger factorial, final int number) {
-        if (number == 1) {
-            return factorial;
-        } else return factorialRec(factorial.multiply(BigInteger.valueOf(number)) , number - 1);
+
+    static BigInteger fibonacciRec(
+        final int number,
+        final BigInteger current,
+        final BigInteger next
+    ) {
+        return number == 0 ? current : fibonacciRec(number - 1, next, current.add(next));
+    }
+
+    static BigInteger fibonacciFor(final int number) {
+        BigInteger before = BigInteger.ZERO, behind = BigInteger.ZERO;
+        BigInteger result = BigInteger.ZERO;
+        for (int i = 0; i < number; i++) {
+            if (i == 0) {
+                result = BigInteger.ONE;
+            } else {
+                result = before.add(behind);
+                before = behind;
+
+            }
+            behind = result;
+        }
+        return result;
+
     }
 
     /**
      * create more thread is create stack frame
      * {@code
-     *   final FutureTask<BigInteger> task =
-     *                 new FutureTask<>(() -> factorialFuture(factorial.multiply(BigInteger.valueOf(number)),number-1));
-     *   new Thread(task);
-     *   task.run();
-     *   return task.get();
+     * final FutureTask<BigInteger> task =
+     * new FutureTask<>(() -> factorialFuture(factorial.multiply(BigInteger.valueOf(number)),number-1));
+     * new Thread(task);
+     * task.run();
+     * return task.get();
      * }
-     *
      */
     static BigInteger factorialFuture(final BigInteger factorial, final int number) throws ExecutionException, InterruptedException {
         if (number == 1) {
             return factorial;
         } else {
             final FutureTask<BigInteger> task =
-                new FutureTask<>(() -> factorialFuture(factorial.multiply(BigInteger.valueOf(number)),number-1));
+                new FutureTask<>(() -> factorialFuture(factorial.multiply(BigInteger.valueOf(number)), number - 1));
             new Thread(task);
             task.run();
             return task.get();
@@ -71,70 +92,80 @@ class TailRecTest {
     }
 
     /**
-     * 1000 =>1.1263
-     * 5000 =>1.0922
-     * 8000 =>1.0924
-     * 10000 =>1.0954
-     * 12000 =>1.0954
-     * 20000 =>overflow
+     * --vs for---
+     * 150 --> 1.67
+     * 1500 --> 1.18
+     * 15000 --> 1.014
+     * 150000 --> 1.014
      */
     @Test
-    void benchmark() throws ExecutionException, InterruptedException {
-        System.out.println("begin at "+ Instant.now());
-        final int times=12000;
-        double x=0;
-        for (int i = 0; i < 1000; i++) {
-            x+=timeCheck(times);
+    void benchmark() {
+        System.out.println("TailRec vs For on fibonacci");
+        System.out.println("begin at " + Instant.now());
+        int max = 150000;
+        while (max>10){
+            double x = 0;
+            for (int i = 0; i < 1000; i++) {
+                x += timeCheck(max);
+            }
+            System.out.println("max="+max+" -->"+(x / 1000.0));
+            System.out.println("end at " + Instant.now());
+            max=max/10;
         }
-        System.out.println(x/1000.0);
+        System.out.println("all end at " + Instant.now());
     }
+
     //limit 500m =>46.727
     //limit 1G =>45.442
     //limit 2G =>45.393
     @Test
-    void stackView(){
-        final int times=15000;
-        final long ts1=System.nanoTime();
-        for (int i = 0; i <1000 ; i++) {
-            factorial(times).get().orElse(BigInteger.ZERO);
+    void stackView() {
+        final int times = 15000;
+        final long ts1 = System.nanoTime();
+        for (int i = 0; i < 1000; i++) {
+            Fibonacci(times).get().orElse(BigInteger.ZERO);
         }
-        final long ts2=System.nanoTime();
+        final long ts2 = System.nanoTime();
 
-        System.out.println("escape:"+(ts2-ts1)/1000000/1000.0);
+        System.out.println("escape:" + (ts2 - ts1) / 1000000 / 1000.0);
     }
-    void benchTime(Runnable task){
-        final long ts1=System.nanoTime();
+
+    void benchTime(Runnable task) {
+        final long ts1 = System.nanoTime();
         task.run();
-        final long ts2=System.nanoTime();
-        System.out.println("time escape:"+(ts2-ts1)/1000000+"ms");
+        final long ts2 = System.nanoTime();
+        System.out.println("time escape:" + (ts2 - ts1) / 1000000 + "ms");
     }
-    long benchTimeReturn(Runnable task){
-        final long ts1=System.nanoTime();
+
+    long benchTimeReturn(Runnable task) {
+        final long ts1 = System.nanoTime();
         task.run();
-        final long ts2=System.nanoTime();
-       return (ts2-ts1);
+        final long ts2 = System.nanoTime();
+        return (ts2 - ts1);
     }
-    double timeCheck(final int times) throws ExecutionException, InterruptedException {
-        final long ts=System.nanoTime();
-        final BigInteger result = factorial(times).get().orElse(BigInteger.ZERO);
-        final long ts1=System.nanoTime();
-        final long ts2=System.nanoTime();
-        final BigInteger result1 = factorialRec(BigInteger.ONE,times);
-        final long ts3=System.nanoTime();
-        assertEquals(result,result1);
-        final double rate = (ts1 - ts + 0.0) / (ts3 - ts2 + 0.0);
-        System.out.println("x2:"+(ts3-ts2)/1000000+"x1:"+(ts1-ts)/1000000+" rate:"+ rate);
-       return rate;
+
+    double timeCheck(final int times) {
+        final long ts1 = System.nanoTime();
+        final BigInteger result = Fibonacci(times).get().orElse(BigInteger.ZERO);
+        final long ts2 = System.nanoTime();
+//        final BigInteger result1 = factorialRec(BigInteger.ONE,times);
+        final BigInteger result1 = fibonacciFor(times);
+        final long ts3 = System.nanoTime();
+        assertEquals(result, result1);
+        final double rate = (ts2 - ts1 + 0.0) / (ts3 - ts2 + 0.0);
+       // System.out.println("x2:" + (ts3 - ts2) / 1000000 + "x1:" + (ts1 - ts) / 1000000 + " rate:" + rate);
+        return rate;
     }
+
     @Test
     void futureTest() {
         final BigInteger[] bigInteger = new BigInteger[1];
-        benchTime(()->{
+        benchTime(() -> {
             try {
-                bigInteger[0] =  factorialFuture(BigInteger.ONE, 12000);
+                bigInteger[0] = factorialFuture(BigInteger.ONE, 12000);
             } catch (Exception e) {
                 e.printStackTrace();
-                bigInteger[0] =null;
+                bigInteger[0] = null;
             }
         });
         System.out.println(bigInteger[0]);

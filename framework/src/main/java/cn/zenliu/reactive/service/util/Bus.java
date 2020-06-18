@@ -58,6 +58,7 @@ public interface Bus<T extends Bus.Event> {
 
     Disposable subscribe(
         @NotNull final Consumer<? super T> consumer,
+        @Nullable final Consumer<Throwable> onError,
         @Nullable final Predicate<T> predicate,
         @Nullable final Scheduler scheduler
     );
@@ -128,7 +129,7 @@ public interface Bus<T extends Bus.Event> {
             public Flux<T> fetchFlux(
                 final @Nullable Predicate<T> predicate,
                 final @Nullable Scheduler scheduler) {
-                if(this.flux==null) this.prepare();
+                if (this.flux == null) this.prepare();
                 Flux<T> fx = flux.share();
                 if (scheduler != null)
                     fx = fx.subscribeOn(scheduler);
@@ -139,16 +140,19 @@ public interface Bus<T extends Bus.Event> {
             @Override
             public Disposable subscribe(
                 @NotNull final Consumer<? super T> consumer,
+                @Nullable final Consumer<Throwable> onError,
                 @Nullable final Predicate<T> predicate,
                 @Nullable final Scheduler scheduler
             ) {
-                if(this.flux==null) this.prepare();
+                if (this.flux == null) this.prepare();
                 synchronized (disposables) {
                     Flux<T> fx = flux.share();
                     if (scheduler != null)
                         fx = fx.subscribeOn(scheduler);
                     if (predicate != null) fx = fx.filter(predicate);
-                    final Disposable disposable = fx.subscribe(consumer);
+                    final Disposable disposable;
+                    if (onError != null) disposable = fx.subscribe(consumer, onError);
+                    else disposable = fx.subscribe(consumer);
                     disposables.add(disposable);
                     return disposable;
                 }

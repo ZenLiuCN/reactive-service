@@ -101,21 +101,17 @@ public interface TailRec<T> extends Supplier<Optional<T>>  {
 
     final class DoneCall<T> implements TailRec<T> {
         private final T value;
-
         DoneCall(@Nullable final T value) {
             this.value = value;
         }
-
         @Override
         public TailRec<T> apply() {
             throw new Error("not implemented");
         }
-
         @Override
         public boolean isComplete() {
             return true;
         }
-
         @Override
         public Optional<T> get() {
             return Optional.ofNullable(value);

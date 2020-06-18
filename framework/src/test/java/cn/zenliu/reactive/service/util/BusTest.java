@@ -42,7 +42,7 @@ class BusTest {
         final Bus<Bus.Event> bus = Bus.defaultBus.get()
             .orElseThrow(() -> new RuntimeException("hh"));
         final EventImpl ev=new EventImpl("ohoh");
-       bus.subscribe(e->assertEquals(ev,e));
+       bus.subscribe(e->assertEquals(ev,e),null,null,null);
        bus.publish(ev);
        Thread.sleep(1000);
     }
