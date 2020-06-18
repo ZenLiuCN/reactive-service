@@ -101,18 +101,20 @@ class TailRecTest {
     @Test
     void benchmark() {
         System.out.println("TailRec vs For on fibonacci");
-        System.out.println("begin at " + Instant.now());
-        int max = 150000;
-        while (max>10){
+        long st=System.currentTimeMillis();
+        System.out.println("begin at " + st);
+        int max = 15000;
+        while (max>100){
             double x = 0;
             for (int i = 0; i < 1000; i++) {
                 x += timeCheck(max);
             }
             System.out.println("max="+max+" -->"+(x / 1000.0));
-            System.out.println("end at " + Instant.now());
+            System.out.println("end at " +( System.currentTimeMillis()-st));
             max=max/10;
+
         }
-        System.out.println("all end at " + Instant.now());
+        System.out.println("all end at " + (System.currentTimeMillis() -st));
     }
 
     //limit 500m =>46.727
