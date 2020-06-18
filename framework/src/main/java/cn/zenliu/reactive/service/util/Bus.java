@@ -81,7 +81,7 @@ public interface Bus<T extends Bus.Event> {
 
     @UtilityClass
     class scope {
-        protected abstract class DefaultAbstractBus<T extends Bus.Event> implements Bus<T> {
+        public abstract class DefaultAbstractBus<T extends Bus.Event> implements Bus<T> {
             protected DefaultAbstractBus(final Supplier<FluxProcessor<T, T>> supplier) {
                 this.supplier = supplier;
             }

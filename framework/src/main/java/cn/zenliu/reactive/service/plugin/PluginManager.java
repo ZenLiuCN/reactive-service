@@ -124,11 +124,15 @@ public interface PluginManager {
                             throw new IllegalArgumentException(clz.getCanonicalName() + " is not a plugin");
                         }
                     });
-                final Iterator<Plugin> itr = load(Plugin.class).iterator();
-                itr.forEachRemaining(p -> {
-                    if (!preferSPI) pluginCache.putIfAbsent(p.getClass(), new SoftReference<>(p));
-                    else pluginCache.put(p.getClass(), new SoftReference<>(p));
-                });
+                if(preferSPI){
+                    final Iterator<Plugin> itr = load(Plugin.class).iterator();
+                    itr.forEachRemaining(p -> {
+                        //if (!preferSPI) pluginCache.putIfAbsent(p.getClass(), new SoftReference<>(p));
+                        //else pluginCache.put(p.getClass(), new SoftReference<>(p));
+                         pluginCache.put(p.getClass(), new SoftReference<>(p));
+                    });
+                }
+
             }
 
             private <T extends Plugin> Optional<T> spiInstanceOf(Class<T> clz) {
@@ -141,14 +145,28 @@ public interface PluginManager {
                     return Optional.of(instance);
                 }
             }
-
+            @SuppressWarnings("unchecked")
             private <T extends Plugin> Optional<T> reflectInstanceOf(Class<T> clz) {
-                try {
+                /*try {
                     final Method callable = clz.getDeclaredMethod("getInstance");
                     @SuppressWarnings("unchecked") final T instance = (T) callable.invoke(null);
                     if (instance == null) return Optional.empty();
                     pluginCache.put(clz, new SoftReference<T>(instance));
                     return Optional.of(instance);
+                } catch (Throwable t) {
+                    return Optional.empty();
+                }*/
+                 try {
+                    final Method callable = clz.getDeclaredMethod("getSingleton");
+                    final Singleton<? extends Plugin> singleton = (Singleton<? extends Plugin>) callable.invoke(null);
+                    if (singleton == null) return Optional.empty();
+                     final Optional<? extends Plugin> hardReference = singleton.getHardReference();
+                     if(hardReference.isPresent()){
+                         final T instance=(T)hardReference.get();
+                         pluginCache.put(clz, new SoftReference<T>(instance));
+                         return Optional.of(instance);
+                     }
+                    return Optional.empty();
                 } catch (Throwable t) {
                     return Optional.empty();
                 }

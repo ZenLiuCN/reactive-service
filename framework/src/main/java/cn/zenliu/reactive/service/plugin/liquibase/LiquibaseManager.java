@@ -50,7 +50,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import static cn.zenliu.reactive.service.plugin.liquibase.LiquibaseManager.scope.singleton;
+
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -85,11 +85,11 @@ public interface LiquibaseManager extends Plugin {
 
 
     static LiquibaseManager getSoftInstance() {
-        return singleton.getSoftInstance().orElseThrow(Plugin.scope::InstanceErrorSuppler);
+        return scope.singleton.getSoftInstance().orElseThrow(Plugin.scope::InstanceErrorSuppler);
     }
 
     static LiquibaseManager getHardInstance() {
-        return singleton.getHardReference().orElseThrow(Plugin.scope::InstanceErrorSuppler);
+        return scope.singleton.getHardReference().orElseThrow(Plugin.scope::InstanceErrorSuppler);
     }
 
     //endregion
