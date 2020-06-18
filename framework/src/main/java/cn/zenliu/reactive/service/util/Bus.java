@@ -128,6 +128,7 @@ public interface Bus<T extends Bus.Event> {
             public Flux<T> fetchFlux(
                 final @Nullable Predicate<T> predicate,
                 final @Nullable Scheduler scheduler) {
+                if(this.flux==null) this.prepare();
                 Flux<T> fx = flux.share();
                 if (scheduler != null)
                     fx = fx.subscribeOn(scheduler);
@@ -141,6 +142,7 @@ public interface Bus<T extends Bus.Event> {
                 @Nullable final Predicate<T> predicate,
                 @Nullable final Scheduler scheduler
             ) {
+                if(this.flux==null) this.prepare();
                 synchronized (disposables) {
                     Flux<T> fx = flux.share();
                     if (scheduler != null)
