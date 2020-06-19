@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public interface Union {
     Class<?> getType();
@@ -46,6 +47,15 @@ public interface Union {
      * @param <T>      desired type
      */
     <T> Union caseDo(Class<T> type, Consumer<T> consumer);
+
+    /**
+     *
+     * @param type     target type
+     * @param converter converter of value
+     * @param <T>      desired type
+     * @return new Union with converted value
+     */
+    <T> Union caseAs(Class<T> type, Function<T, T> converter);
 
     /**
      * default type guard method (should be last of all guards)
@@ -142,6 +152,16 @@ public interface Union {
                 return this;
             }
 
+            @SuppressWarnings("unchecked")
+            public <T> Union caseAs(Class<T> type, Function<T, T> converter) {
+                if (type.isInstance(value)) {
+                    synchronized (this) {
+                        match = true;
+                        return of(converter.apply((T) value));
+                    }
+                }
+                return this;
+            }
             @Override
             public void caseElse(Consumer<Object> consumer) {
                 if (!match) {
