@@ -118,7 +118,7 @@ public interface Union {
 
             @Override
             public int hashCode() {
-                return holder.hashCode() + 31 * value.hashCode();
+                return holder.hashCode() + (value==null?31:31 * value.hashCode());
             }
 
             @Override
