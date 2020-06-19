@@ -49,10 +49,9 @@ public interface Union {
     <T> Union caseDo(Class<T> type, Consumer<T> consumer);
 
     /**
-     *
-     * @param type     target type
+     * @param type      target type
      * @param converter converter of value
-     * @param <T>      desired type
+     * @param <T>       desired type
      * @return new Union with converted value
      */
     <T> Union caseAs(Class<T> type, Function<T, T> converter);
@@ -63,6 +62,8 @@ public interface Union {
      * @param consumer consumer of value
      */
     void caseElse(Consumer<Object> consumer);
+
+    Union caseElseReturn(Function<Object, Object> converter);
 
     /**
      * create a Union with new value
@@ -83,11 +84,19 @@ public interface Union {
     interface Union2<T1, T2> extends Union {
         @Override
         Union2<T1, T2> of(Object value);
+        @Override
+        <T> Union2<T1, T2> caseDo(Class<T> type, Consumer<T> consumer);
+        @Override
+        <T> Union2<T1, T2> caseAs(Class<T> type, Function<T, T> converter);
     }
 
     interface Union3<T1, T2, T3> extends Union {
         @Override
         Union3<T1, T2, T3> of(Object value);
+        @Override
+        <T> Union3<T1, T2, T3> caseDo(Class<T> type, Consumer<T> consumer);
+        @Override
+        <T> Union3<T1, T2, T3>  caseAs(Class<T> type, Function<T, T> converter);
     }
 
 
@@ -128,7 +137,7 @@ public interface Union {
 
             @Override
             public int hashCode() {
-                return holder.hashCode() + (value==null?31:31 * value.hashCode());
+                return holder.hashCode() + (value == null ? 31 : 31 * value.hashCode());
             }
 
             @Override
@@ -152,6 +161,7 @@ public interface Union {
                 return this;
             }
 
+            @Override
             @SuppressWarnings("unchecked")
             public <T> Union caseAs(Class<T> type, Function<T, T> converter) {
                 if (type.isInstance(value)) {
@@ -162,6 +172,15 @@ public interface Union {
                 }
                 return this;
             }
+
+            @Override
+            public Union caseElseReturn(Function<Object, Object> converter) {
+                if (!match) {
+                    return of(converter.apply(value));
+                }
+                return this;
+            }
+
             @Override
             public void caseElse(Consumer<Object> consumer) {
                 if (!match) {
@@ -224,6 +243,18 @@ public interface Union {
             public Union2<T1, T2> of(Object value) {
                 return Union.of(value, clz1, clz2);
             }
+            @SuppressWarnings("unchecked")
+            @Override
+            public <T> Union2<T1, T2> caseDo(Class<T> type, Consumer<T> consumer){
+                return (Union2<T1, T2> )super.caseDo(type,consumer);
+            }
+            @SuppressWarnings("unchecked")
+            @Override
+            public <T> Union2<T1, T2> caseAs(Class<T> type, Function<T, T> converter){
+                return (Union2<T1, T2> )super.caseAs(type,converter);
+            }
+
+
         }
 
         private final class Union3Impl<T1, T2, T3> extends UnionImpl implements Union3<T1, T2, T3> {
@@ -248,6 +279,17 @@ public interface Union {
             @Override
             public Union3<T1, T2, T3> of(Object value) {
                 return Union.of(value, clz1, clz2, clz3);
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public <T>Union3<T1, T2, T3>caseDo(Class<T> type, Consumer<T> consumer){
+                return (Union3<T1, T2, T3>)super.caseDo(type,consumer);
+            }
+            @SuppressWarnings("unchecked")
+            @Override
+            public <T> Union3<T1, T2, T3> caseAs(Class<T> type, Function<T, T> converter){
+                return (Union3<T1, T2, T3> )super.caseAs(type,converter);
             }
         }
     }
