@@ -92,18 +92,43 @@ class TailRecTest {
     }
 
     /**
-     * --vs for---
-     * 150 --> 1.67
-     * 1500 --> 1.18
-     * 15000 --> 1.014
-     * 150000 --> 1.014
+     * --------------------------------
+     * TailRec vs For on fibonacci
+     * begin at 1592536632087
+     * max=15000 -->1.0348465044501094
+     * end at 11809
+     * max=1500 -->1.0728607265215908
+     * end at 11974
+     * max=150 -->1.0850038949162584
+     * end at 11984
+     * all end at 11984
+     * --------------------------------
+     * TailRec vs Rec on fibonacci
+     * begin at 1592536740312
+     * max=12000 -->1.0544714510438453
+     * end at 7138
+     * max=1200 -->1.1447644319496169
+     * end at 7245
+     * max=120 -->2.314051661760839
+     * end at 7256
+     * all end at 7256
+     * --------------------------------
+     * For vs Rec on fibonacci
+     * begin at 1592536808985
+     * max=12000 -->1.068011664558225
+     * end at 7666
+     * max=1200 -->1.1755718156003991
+     * end at 7779
+     * max=120 -->1.2044490555351077
+     * end at 7786
+     * all end at 7786
      */
     @Test
     void benchmark() {
-        System.out.println("TailRec vs For on fibonacci");
+        System.out.println("For vs Rec on fibonacci");
         long st=System.currentTimeMillis();
         System.out.println("begin at " + st);
-        int max = 15000;
+        int max = 12000;
         while (max>100){
             double x = 0;
             for (int i = 0; i < 1000; i++) {
@@ -148,10 +173,11 @@ class TailRecTest {
 
     double timeCheck(final int times) {
         final long ts1 = System.nanoTime();
-        final BigInteger result = Fibonacci(times).get().orElse(BigInteger.ZERO);
+        final BigInteger result = fibonacciFor(times);
+       // final BigInteger result = Fibonacci(times).get().orElse(BigInteger.ZERO);
         final long ts2 = System.nanoTime();
-//        final BigInteger result1 = factorialRec(BigInteger.ONE,times);
-        final BigInteger result1 = fibonacciFor(times);
+       final BigInteger result1 = fibonacciRec(times,BigInteger.ZERO,BigInteger.ONE);
+     //   final BigInteger result1 = fibonacciFor(times);
         final long ts3 = System.nanoTime();
         assertEquals(result, result1);
         final double rate = (ts2 - ts1 + 0.0) / (ts3 - ts2 + 0.0);
