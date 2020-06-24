@@ -33,7 +33,7 @@ import java.util.function.Supplier;
 
 /**
  * this is just some simple impl , in some case that won't use Reactor
- *
+ * factory method with eager* means it will evaluation at instant
  * @param <T>
  */
 public interface Monad<T> extends Supplier<Optional<T>> {
@@ -43,8 +43,12 @@ public interface Monad<T> extends Supplier<Optional<T>> {
 
     <R> Monad<R> flatMap(final Function<T, Monad<R>> factor);
 
-    static <T> Monad<T> unitEager(@NotNull T value) {
+    static <T> Monad<T> eagerUnit(@NotNull T value) {
         return new scope.MonadEager<T>(value);
+    }
+
+    static <T, R> Monad<R> eagerBind(@NotNull T value, @NotNull Function<T, R> functor) {
+        return new scope.MonadEager<T>(value).map(functor);
     }
 
     static <T> Monad<T> unit(@NotNull T value) {
