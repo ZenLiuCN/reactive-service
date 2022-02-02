@@ -34,7 +34,7 @@
         <dinject.version>1.16</dinject.version>
 
         <hikari-cp.version>3.4.5</hikari-cp.version>
-        <postgresql.version>42.2.10</postgresql.version>
+        <postgresql.version>42.2.25</postgresql.version>
         <liquibase.version>3.8.7</liquibase.version>
         <snakeyaml.version>1.12</snakeyaml.version>
         <groovy.version>2.4.14</groovy.version>
