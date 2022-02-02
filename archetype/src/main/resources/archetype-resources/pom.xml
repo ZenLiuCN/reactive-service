@@ -36,7 +36,7 @@
         <hikari-cp.version>3.4.5</hikari-cp.version>
         <postgresql.version>42.2.10</postgresql.version>
         <liquibase.version>3.8.7</liquibase.version>
-        <snakeyaml.version>1.12</snakeyaml.version>
+        <snakeyaml.version>1.26</snakeyaml.version>
         <groovy.version>2.4.14</groovy.version>
 
         <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
